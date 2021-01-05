@@ -32,12 +32,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.NavUtils;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -47,10 +41,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NavUtils;
+
+import com.google.android.material.snackbar.Snackbar;
+
 import org.acra.ReportField;
-import org.acra.collector.CrashReportData;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.acra.data.CrashReportData;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -81,31 +80,29 @@ public class ErrorActivity extends AppCompatActivity
     // views
     private EditText userCommentBox;
 
-    public static void reportUiError(final AppCompatActivity activity, final Throwable el)
-    {
-        reportError(activity, el, null,
-                ErrorInfo.make(UserAction.UI_ERROR, "none", "", R.string.app_ui_crash));
+    public static void reportUiError(final AppCompatActivity activity, final Throwable el) {
+        reportError(activity, el, activity.getClass(), null, ErrorInfo.make(UserAction.UI_ERROR,
+                "none", "", R.string.app_ui_crash));
     }
 
     public static void reportError(final Context context, final List<Throwable> el,
-                                   View rootView, final ErrorInfo errorInfo)
-    {
-        if (rootView != null)
-        {
+                                   final Class returnActivity, final View rootView,
+                                   final ErrorInfo errorInfo) {
+        if (rootView != null) {
             Snackbar.make(rootView, R.string.error_snackbar_message, 3 * 1000)
                     .setActionTextColor(Color.YELLOW)
-                    .setAction(R.string.error_snackbar_action, v ->
-                            startErrorActivity(context, errorInfo, el)).show();
-        }
-        else
-        {
-            startErrorActivity(context, errorInfo, el);
+                    .setAction(context.getString(R.string.error_snackbar_action).toUpperCase(), v ->
+                            startErrorActivity(returnActivity, context, errorInfo, el)).show();
+        } else {
+            startErrorActivity(returnActivity, context, errorInfo, el);
         }
     }
 
-    private static void startErrorActivity(Context context, ErrorInfo errorInfo, List<Throwable> el)
-    {
-        Intent intent = new Intent(context, ErrorActivity.class);
+    private static void startErrorActivity(final Class returnActivity, final Context context,
+                                           final ErrorInfo errorInfo, final List<Throwable> el) {
+        final ActivityCommunicator ac = ActivityCommunicator.getCommunicator();
+        ac.setReturnActivity(returnActivity);
+        final Intent intent = new Intent(context, ErrorActivity.class);
         intent.putExtra(ERROR_INFO, errorInfo);
         intent.putExtra(ERROR_LIST, elToSl(el));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -113,50 +110,41 @@ public class ErrorActivity extends AppCompatActivity
     }
 
     public static void reportError(final Context context, final Throwable e,
-                                   View rootView, final ErrorInfo errorInfo)
-    {
-        List<Throwable> el = null;
-        if (e != null)
-        {
-            el = new Vector<>();
-            el.add(e);
-        }
-        reportError(context, el, rootView, errorInfo);
-    }
-
-    // async call
-    public static void reportError(Handler handler, final Context context, final Throwable e,
-                                   final View rootView, final ErrorInfo errorInfo)
-    {
+                                   final Class returnActivity, final View rootView,
+                                   final ErrorInfo errorInfo) {
         List<Throwable> el = null;
         if (e != null) {
             el = new Vector<>();
             el.add(e);
         }
-        reportError(handler, context, el, rootView, errorInfo);
+        reportError(context, el, returnActivity, rootView, errorInfo);
     }
 
     // async call
-    public static void reportError(Handler handler, final Context context, final List<Throwable> el,
-                                   final View rootView, final ErrorInfo errorInfo)
-    {
-        handler.post(() -> reportError(context, el, rootView, errorInfo));
+    public static void reportError(final Handler handler, final Context context,
+                                   final Throwable e, final Class returnActivity,
+                                   final View rootView, final ErrorInfo errorInfo) {
+
+        List<Throwable> el = null;
+        if (e != null) {
+            el = new Vector<>();
+            el.add(e);
+        }
+        reportError(handler, context, el, returnActivity, rootView, errorInfo);
     }
 
-    public static void reportError(final Context context, final CrashReportData report, final ErrorInfo errorInfo)
-    {
-        // get key first (don't ask about this solution)
-        ReportField key = null;
-        for (ReportField k : report.keySet())
-        {
-            if (k.toString().equals("STACK_TRACE"))
-            {
-                key = k;
-            }
-        }
-        String[] el = new String[]{report.get(key).toString()};
+    // async call
+    public static void reportError(final Handler handler, final Context context,
+                                   final List<Throwable> el, final Class returnActivity,
+                                   final View rootView, final ErrorInfo errorInfo) {
+        handler.post(() -> reportError(context, el, returnActivity, rootView, errorInfo));
+    }
 
-        Intent intent = new Intent(context, ErrorActivity.class);
+    public static void reportError(final Context context, final CrashReportData report,
+                                   final ErrorInfo errorInfo) {
+        final String[] el = {report.getString(ReportField.STACK_TRACE)};
+
+        final Intent intent = new Intent(context, ErrorActivity.class);
         intent.putExtra(ERROR_INFO, errorInfo);
         intent.putExtra(ERROR_LIST, el);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

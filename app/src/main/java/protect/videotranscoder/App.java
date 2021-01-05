@@ -4,9 +4,9 @@ import android.app.Application;
 import android.content.Context;
 
 import org.acra.ACRA;
-import org.acra.config.ACRAConfiguration;
 import org.acra.config.ACRAConfigurationException;
-import org.acra.config.ConfigurationBuilder;
+import org.acra.config.CoreConfiguration;
+import org.acra.config.CoreConfigurationBuilder;
 import org.acra.sender.ReportSenderFactory;
 
 import protect.videotranscoder.report.AcraReportSenderFactory;
@@ -24,20 +24,26 @@ public class App extends Application
         initACRA();
     }
 
-    private void initACRA()
-    {
-        try
-        {
-            final ACRAConfiguration acraConfig = new ConfigurationBuilder(this)
-                    .setReportSenderFactoryClasses(reportSenderFactoryClasses)
+    protected void initACRA() {
+        if (ACRA.isACRASenderServiceProcess()) {
+            return;
+        }
+
+        try {
+            final CoreConfiguration acraConfig = new CoreConfigurationBuilder(this)
                     .setBuildConfigClass(BuildConfig.class)
                     .build();
             ACRA.init(this, acraConfig);
-        }
-        catch (ACRAConfigurationException ace)
-        {
-            ErrorActivity.reportError(this, ace, null, ErrorActivity.ErrorInfo.make(UserAction.SOMETHING_ELSE, "none",
-                    "Could not initialize ACRA crash report", R.string.app_ui_crash));
+
+        } catch (final ACRAConfigurationException ace) {
+
+            ace.printStackTrace();
+            ErrorActivity.reportError(this,
+                    ace,
+                    null,
+                    null,
+                    ErrorActivity.ErrorInfo.make(UserAction.SOMETHING_ELSE, "none",
+                            "Could not initialize ACRA crash report", R.string.app_ui_crash));
         }
     }
 }
