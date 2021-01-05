@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#F65F54</color>
+    <color name="colorPrimaryDark">#D32E2E</color>
+    <color name="colorAccent">#D8BD6D</color>
+    <color name="colorPrimaryText">#ffffff</color>
+    <color name="colorSecondaryText">#000000</color>
+    <color name="secondaryButton">#959494</color>
+
+    <color name="inputContrastBackground">#292929</color>
+    <color name="inputBackground">#424242</color>
+    <color name="inputBorder">#6C6C6C</color>
+    <color name="inputDividerBorder">#AAAAAA</color>
+</resources>
