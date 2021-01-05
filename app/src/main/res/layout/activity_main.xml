@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+
     android:id="@+id/mainlayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -14,22 +16,47 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="65dp">
+
+            <Button
+                android:layout_weight="0.5"
+                android:layout_margin="4dp"
+                android:id="@+id/selectVideo"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:text="@string/selectVideo"
+                />
+
+            <Button
+                android:backgroundTint="@color/secondaryButton"
+                android:layout_weight="0.5"
+                android:layout_margin="4dp"
+                android:id="@+id/cancel"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:text="@string/cancel"
+                />
+
+        </LinearLayout>
+
         <VideoView
             android:id="@+id/videoView"
             android:layout_width="match_parent"
             android:layout_height="@dimen/dp200"
             android:layout_gravity="center"
-            android:layout_marginLeft="@dimen/dp20"
-            android:layout_marginRight="@dimen/dp20"
-            android:layout_marginTop="@dimen/dp5" />
+            android:layout_marginTop="8dp" />
 
-        <com.crystal.crystalrangeseekbar.widgets.CrystalRangeSeekbar
+        <com.google.android.material.slider.RangeSlider
+            android:layout_marginTop="16dp"
             android:id="@+id/rangeSeekBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:data_type="_integer"
             android:visibility="invisible"
-            />
+            tools:visibility="visible"/>
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -72,27 +99,12 @@
                     android:visibility="gone"
                     android:src="@drawable/ic_fast_forward_black_24dp"/>
                 <Button
-                    android:id="@+id/selectVideo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:text="@string/selectVideo"
-                    />
-                <Button
                     android:id="@+id/encode"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_gravity="center_vertical"
                     android:visibility="gone"
                     android:text="@string/encode"
-                    />
-                <Button
-                    android:id="@+id/cancel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_vertical"
-                    android:visibility="gone"
-                    android:text="@string/cancel"
                     />
                 <ImageView
                     android:id="@+id/endJumpBack"
@@ -485,6 +497,7 @@
                     android:textSize="@dimen/inputSize"
                     android:drawSelectorOnTop="true" />
             </LinearLayout>
+
             <View
                 android:id="@+id/audioChannelContainerDivider"
                 android:layout_height="@dimen/inputBorderThickness"

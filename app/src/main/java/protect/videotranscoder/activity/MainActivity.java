@@ -20,11 +20,12 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.support.annotation.IdRes;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,10 +42,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.crystal.crystalrangeseekbar.interfaces.OnRangeSeekbarChangeListener;
+import com.google.android.material.slider.RangeSlider;
 import com.google.common.collect.ImmutableMap;
-
-import com.crystal.crystalrangeseekbar.widgets.CrystalRangeSeekbar;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.nononsenseapps.filepicker.Utils;
 
@@ -128,7 +127,7 @@ public class MainActivity extends AppCompatActivity
             R.id.audioChannelContainerDivider));
 
     private VideoView videoView;
-    private CrystalRangeSeekbar rangeSeekBar;
+    private RangeSlider rangeSeekBar;
     private Timer videoTimer = null;
     private ProgressBar progressBar;
 
@@ -167,6 +166,7 @@ public class MainActivity extends AppCompatActivity
         selectVideoButton = findViewById(R.id.selectVideo);
         encodeButton = findViewById(R.id.encode);
         cancelButton = findViewById(R.id.cancel);
+        cancelButton.setEnabled(false);
 
         startJumpBack = findViewById(R.id.startJumpBack);
         startJumpForward = findViewById(R.id.startJumpForward);
@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity
 
         selectVideoButton.setEnabled(false);
 
-        if(FFmpegUtil.init(getApplicationContext()) == false)
+        if(!FFmpegUtil.init(getApplicationContext()))
         {
             showUnsupportedExceptionDialog();
         }
@@ -642,6 +642,10 @@ public class MainActivity extends AppCompatActivity
     {
         List<String> command = new LinkedList<>();
 
+        // Set number of threads, test if this is actually working
+        command.add("-threads");
+        command.add("4");
+
         // If the output exists, overwrite it
         command.add("-y");
 
@@ -830,10 +834,10 @@ public class MainActivity extends AppCompatActivity
             outputDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
         }
 
-        if(outputDir.exists() == false)
+        if(!outputDir.exists())
         {
             boolean result = outputDir.mkdirs();
-            if(result == false)
+            if(!result)
             {
                 Log.w(TAG, "Unable to create destination dir: " + outputDir.getAbsolutePath());
             }
@@ -852,8 +856,8 @@ public class MainActivity extends AppCompatActivity
             destination = new File(outputDir, fileBaseName + "_" + fileNo + extension);
         }
 
-        int startTimeSec = rangeSeekBar.getSelectedMinValue().intValue();
-        int endTimeSec = rangeSeekBar.getSelectedMaxValue().intValue();
+        int startTimeSec = rangeSeekBar.getValues().get(0).intValue();
+        int endTimeSec = rangeSeekBar.getValues().get(1).intValue();
 
         int durationSec = (int)(videoInfo.durationMs/1000);
 
@@ -876,7 +880,7 @@ public class MainActivity extends AppCompatActivity
         endJumpBack.setVisibility(View.GONE);
         endJumpForward.setVisibility(View.GONE);
 
-        cancelButton.setVisibility(View.VISIBLE);
+        cancelButton.setEnabled(true);
         progressBar.setVisibility(View.VISIBLE);
     }
 
@@ -889,7 +893,7 @@ public class MainActivity extends AppCompatActivity
         endJumpBack.setVisibility(View.VISIBLE);
         endJumpForward.setVisibility(View.VISIBLE);
 
-        cancelButton.setVisibility(View.GONE);
+        cancelButton.setEnabled(false);
         progressBar.setVisibility(View.GONE);
     }
 
@@ -910,7 +914,7 @@ public class MainActivity extends AppCompatActivity
 
     private boolean isEncoding()
     {
-        return cancelButton.getVisibility() == View.VISIBLE;
+        return cancelButton.isEnabled();
     }
 
     private void stopVideoPlayback()
@@ -927,8 +931,8 @@ public class MainActivity extends AppCompatActivity
     {
         stopVideoPlayback();
 
-        int startTimeSec = rangeSeekBar.getSelectedMinValue().intValue();
-        int stopTimeSec = rangeSeekBar.getSelectedMaxValue().intValue();
+        int startTimeSec = rangeSeekBar.getValues().get(0).intValue();
+        int stopTimeSec = rangeSeekBar.getValues().get(1).intValue();
 
         if(positionSec == null)
         {
@@ -977,7 +981,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onResume();
 
-        if(isEncoding() == false && videoInfo != null)
+        if(!isEncoding() && videoInfo != null)
         {
             startVideoPlayback(null);
         }
@@ -1000,7 +1004,7 @@ public class MainActivity extends AppCompatActivity
         if(SEND_INTENT_TMP_FILE.exists())
         {
             boolean result = SEND_INTENT_TMP_FILE.delete();
-            if(result == false)
+            if(!result)
             {
                 Log.w(TAG, "Failed to delete tmp SEND intent file on exit");
             }
@@ -1094,7 +1098,7 @@ public class MainActivity extends AppCompatActivity
                     findViewById(resId).setVisibility(visibility);
                 }
 
-                if(resolutionSpinner.getSelectedItem().toString().equals(customString) == false)
+                if(!resolutionSpinner.getSelectedItem().toString().equals(customString))
                 {
                     findViewById(R.id.resolutionCustomContainer).setVisibility(View.GONE);
                 }
@@ -1171,7 +1175,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         LinkedList<String> fps = new LinkedList<>(Arrays.asList("15", "24", "23.98", "25", "29.97", "30", "50"));
-        if(videoInfo.videoFramerate != null && fps.contains(videoInfo.videoFramerate) == false)
+        if(videoInfo.videoFramerate != null && !fps.contains(videoInfo.videoFramerate))
         {
             fps.add(videoInfo.videoFramerate);
             Collections.sort(fps);
@@ -1179,7 +1183,7 @@ public class MainActivity extends AppCompatActivity
         fpsSpinner.setAdapter(new ArrayAdapter<>(this, R.layout.spinner_textview, fps));
 
         LinkedList<String> resolution = new LinkedList<>();
-        if(videoInfo.videoResolution != null && resolution.contains(videoInfo.videoResolution) == false)
+        if(videoInfo.videoResolution != null && !resolution.contains(videoInfo.videoResolution))
         {
             resolution.add(videoInfo.videoResolution);
 
@@ -1319,12 +1323,12 @@ public class MainActivity extends AppCompatActivity
                 tvRight.setText(getTime(durationMs / 1000));
                 mp.setLooping(true);
 
-                rangeSeekBar.setMinValue(0);
-                rangeSeekBar.setMaxValue(durationMs / 1000f);
+                rangeSeekBar.setValueFrom(0);
+                rangeSeekBar.setValueTo(durationMs / 1000f);
                 rangeSeekBar.setEnabled(true);
                 rangeSeekBar.setVisibility(View.VISIBLE);
 
-                rangeSeekBar.setOnRangeSeekbarChangeListener(new OnRangeSeekbarChangeListener()
+                rangeSeekBar.addOnSliderTouchListener(new RangeSlider.OnSliderTouchListener()
                 {
                     Number prevMinValueSec = 0;
                     Number prevMaxValueSec = (int)(durationMs / 1000f);
@@ -1333,10 +1337,17 @@ public class MainActivity extends AppCompatActivity
                     // this may seconds before the end
                     static final int END_PLAYBACK_HEADROOM_SEC = 3;
 
+
                     @Override
-                    public void valueChanged(Number minValue, Number maxValue)
+                    public void onStartTrackingTouch(@NonNull RangeSlider slider) { }
+
+                    @Override
+                    public void onStopTrackingTouch(RangeSlider slider) {
                     {
                         Integer playStartSec = null;
+
+                        Float minValue = slider.getValues().get(0);
+                        Float maxValue = slider.getValues().get(1);
 
                         if(prevMaxValueSec.intValue() != maxValue.intValue())
                         {
@@ -1364,7 +1375,7 @@ public class MainActivity extends AppCompatActivity
                             startVideoPlayback(playStartSec);
                         }
                     }
-                });
+                    }});
 
                 class RangeSeekChanger implements View.OnClickListener
                 {
@@ -1379,15 +1390,13 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onClick(View v)
                     {
-                        rangeSeekBar.setMinValue(0);
-                        rangeSeekBar.setMaxValue(durationMs / 1000f);
+                        rangeSeekBar.setValueFrom(0);
+                        rangeSeekBar.setValueTo(durationMs / 1000f);
 
-                        int selectedStart = rangeSeekBar.getSelectedMinValue().intValue();
-                        int selectedEnd = rangeSeekBar.getSelectedMaxValue().intValue();
+                        int selectedStart = rangeSeekBar.getValues().get(0).intValue();
+                        int selectedEnd = rangeSeekBar.getValues().get(1).intValue();
 
-                        rangeSeekBar.setMinStartValue(selectedStart + startOffset);
-                        rangeSeekBar.setMaxStartValue(selectedEnd + endOffset);
-                        rangeSeekBar.apply();
+                        rangeSeekBar.setValues((float) (selectedStart + startOffset), (float) (selectedEnd + endOffset));
                     }
                 }
 
